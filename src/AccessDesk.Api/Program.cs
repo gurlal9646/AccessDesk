@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using AccessDesk.Api.Data;
 using AccessDesk.Api.Security;
 using AccessDesk.Api.Services;
@@ -52,7 +53,9 @@ builder.Services.AddCors(options =>
         .AllowAnyMethod());
 });
 
-builder.Services.AddControllers();
+// Enums travel as readable text ("Pending") so the Angular client does not depend on numeric values.
+builder.Services.AddControllers()
+    .AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 builder.Services.AddOpenApi();
 
 var app = builder.Build();

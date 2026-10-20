@@ -1,5 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using AccessDesk.Api.Contracts;
 using AccessDesk.Api.Domain;
 using AccessDesk.Tests.Support;
@@ -8,6 +10,11 @@ namespace AccessDesk.Tests;
 
 public class AccessRequestsApiTests : IClassFixture<ApiFactory>
 {
+    private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web)
+    {
+        Converters = { new JsonStringEnumConverter() }
+    };
+
     private readonly ApiFactory _factory;
 
     public AccessRequestsApiTests(ApiFactory factory) => _factory = factory;
@@ -33,7 +40,7 @@ public class AccessRequestsApiTests : IClassFixture<ApiFactory>
         await bob.PostAsJsonAsync("/api/requests", NewRequest("Confluence"));
 
         Assert.Equal(HttpStatusCode.Created, created.StatusCode);
-        var aliceList = await alice.GetFromJsonAsync<List<AccessRequestDto>>("/api/requests");
+        var aliceList = await alice.GetFromJsonAsync<List<AccessRequestDto>>("/api/requests", Json);
         Assert.NotNull(aliceList);
         Assert.All(aliceList, r => Assert.Equal("alice", r.RequesterName));
         Assert.Contains(aliceList, r => r.System == "Jira");
@@ -54,7 +61,7 @@ public class AccessRequestsApiTests : IClassFixture<ApiFactory>
     {
         var alice = _factory.CreateClientFor("alice-3", "alice3", "employee");
         var created = await (await alice.PostAsJsonAsync("/api/requests", NewRequest()))
-            .Content.ReadFromJsonAsync<AccessRequestDto>();
+            .Content.ReadFromJsonAsync<AccessRequestDto>(Json);
 
         var response = await alice.PostAsJsonAsync($"/api/requests/{created!.Id}/approve", new DecisionDto(null));
 
@@ -67,13 +74,13 @@ public class AccessRequestsApiTests : IClassFixture<ApiFactory>
         var alice = _factory.CreateClientFor("alice-4", "alice4", "employee");
         var manager = _factory.CreateClientFor("mia-4", "mia4", "manager");
         var created = await (await alice.PostAsJsonAsync("/api/requests", NewRequest()))
-            .Content.ReadFromJsonAsync<AccessRequestDto>();
+            .Content.ReadFromJsonAsync<AccessRequestDto>(Json);
 
         var approve = await manager.PostAsJsonAsync($"/api/requests/{created!.Id}/approve", new DecisionDto("ok"));
         var again = await manager.PostAsJsonAsync($"/api/requests/{created.Id}/reject", new DecisionDto(null));
 
         Assert.Equal(HttpStatusCode.OK, approve.StatusCode);
-        var approved = await approve.Content.ReadFromJsonAsync<AccessRequestDto>();
+        var approved = await approve.Content.ReadFromJsonAsync<AccessRequestDto>(Json);
         Assert.Equal(AccessRequestStatus.Approved, approved!.Status);
         Assert.Equal("mia4", approved.DecidedBy);
         Assert.Equal(HttpStatusCode.Conflict, again.StatusCode);
@@ -84,7 +91,7 @@ public class AccessRequestsApiTests : IClassFixture<ApiFactory>
     {
         var manager = _factory.CreateClientFor("mia-5", "mia5", "manager");
         var created = await (await manager.PostAsJsonAsync("/api/requests", NewRequest()))
-            .Content.ReadFromJsonAsync<AccessRequestDto>();
+            .Content.ReadFromJsonAsync<AccessRequestDto>(Json);
 
         var response = await manager.PostAsJsonAsync($"/api/requests/{created!.Id}/approve", new DecisionDto(null));
 

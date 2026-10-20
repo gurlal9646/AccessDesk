@@ -41,6 +41,27 @@
       "enabled": true,
       "protocol": "openid-connect",
       "bearerOnly": true
+    },
+    {
+      "clientId": "accessdesk-dev-cli",
+      "name": "Local dev only: password grant for curl and scripts",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": true,
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "protocolMappers": [
+        {
+          "name": "accessdesk-api-audience",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "config": {
+            "included.client.audience": "accessdesk-api",
+            "id.token.claim": "false",
+            "access.token.claim": "true"
+          }
+        }
+      ]
     }
   ],
   "users": [
