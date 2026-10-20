@@ -1,0 +1,73 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "keycloak: start",
+      "type": "shell",
+      "command": "docker compose up -d keycloak",
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "detail": "Needs Docker Desktop running and a .env file (copy .env.example)."
+    },
+    {
+      "label": "keycloak: stop",
+      "type": "shell",
+      "command": "docker compose down",
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": []
+    },
+    {
+      "label": "api: build",
+      "type": "process",
+      "command": "dotnet",
+      "args": ["build", "${workspaceFolder}/src/AccessDesk.Api/AccessDesk.Api.csproj"],
+      "problemMatcher": "$msCompile",
+      "group": "build"
+    },
+    {
+      "label": "web: start (ng serve :4200)",
+      "type": "shell",
+      "command": "npm start",
+      "options": { "cwd": "${workspaceFolder}/web" },
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "angular",
+        "pattern": { "regexp": "^$" },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "Building",
+          "endsPattern": "Local:|Application bundle generation complete"
+        }
+      }
+    },
+    {
+      "label": "api: test (xUnit)",
+      "type": "process",
+      "command": "dotnet",
+      "args": ["test", "${workspaceFolder}/AccessDesk.sln"],
+      "problemMatcher": "$msCompile",
+      "group": "test"
+    },
+    {
+      "label": "web: test (Karma)",
+      "type": "shell",
+      "command": "npx ng test --watch=false --browsers=ChromeHeadless",
+      "options": { "cwd": "${workspaceFolder}/web" },
+      "problemMatcher": [],
+      "group": "test"
+    },
+    {
+      "label": "smoke test (needs Keycloak + API running)",
+      "type": "shell",
+      "command": "bash scripts/smoke-test.sh",
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": []
+    },
+    {
+      "label": "start dependencies (Keycloak + web)",
+      "dependsOn": ["keycloak: start", "web: start (ng serve :4200)"],
+      "dependsOrder": "parallel",
+      "problemMatcher": []
+    }
+  ]
+}

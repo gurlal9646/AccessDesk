@@ -1,0 +1,28 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "API (SQLite, http://localhost:5080)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "api: build",
+      "program": "${workspaceFolder}/src/AccessDesk.Api/bin/Debug/net9.0/AccessDesk.Api.dll",
+      "cwd": "${workspaceFolder}/src/AccessDesk.Api",
+      "console": "internalConsole",
+      "stopAtEntry": false,
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ASPNETCORE_URLS": "http://localhost:5080",
+        "Database__Provider": "Sqlite",
+        "ConnectionStrings__Default": "Data Source=accessdesk-dev.db"
+      }
+    },
+    {
+      "name": "Web (Chrome, http://localhost:4200)",
+      "type": "chrome",
+      "request": "launch",
+      "url": "http://localhost:4200",
+      "webRoot": "${workspaceFolder}/web"
+    }
+  ]
+}
