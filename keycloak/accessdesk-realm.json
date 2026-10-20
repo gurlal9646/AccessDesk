@@ -1,0 +1,78 @@
+{
+  "realm": "accessdesk",
+  "enabled": true,
+  "sslRequired": "none",
+  "registrationAllowed": false,
+  "roles": {
+    "realm": [
+      { "name": "employee", "description": "Can raise access requests" },
+      { "name": "manager", "description": "Can approve or reject access requests" },
+      { "name": "admin", "description": "Manager rights plus audit log access" }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "accessdesk-web",
+      "name": "AccessDesk Angular app",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "redirectUris": [ "http://localhost:4200/*" ],
+      "webOrigins": [ "http://localhost:4200" ],
+      "attributes": { "pkce.code.challenge.method": "S256" },
+      "protocolMappers": [
+        {
+          "name": "accessdesk-api-audience",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "config": {
+            "included.client.audience": "accessdesk-api",
+            "id.token.claim": "false",
+            "access.token.claim": "true"
+          }
+        }
+      ]
+    },
+    {
+      "clientId": "accessdesk-api",
+      "name": "AccessDesk API",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "bearerOnly": true
+    }
+  ],
+  "users": [
+    {
+      "username": "alice",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Alice",
+      "lastName": "Employee",
+      "email": "alice@accessdesk.local",
+      "credentials": [ { "type": "password", "value": "alice-dev-only", "temporary": false } ],
+      "realmRoles": [ "employee" ]
+    },
+    {
+      "username": "mia",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Mia",
+      "lastName": "Manager",
+      "email": "mia@accessdesk.local",
+      "credentials": [ { "type": "password", "value": "mia-dev-only", "temporary": false } ],
+      "realmRoles": [ "employee", "manager" ]
+    },
+    {
+      "username": "ann",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Ann",
+      "lastName": "Admin",
+      "email": "ann@accessdesk.local",
+      "credentials": [ { "type": "password", "value": "ann-dev-only", "temporary": false } ],
+      "realmRoles": [ "employee", "admin" ]
+    }
+  ]
+}
