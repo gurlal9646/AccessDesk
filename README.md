@@ -11,10 +11,10 @@ Week 1: the API, the Angular UI with Keycloak login (authorization code + PKCE),
 - Admins can read the audit log. Every create and decision writes an audit entry.
 
 ## Stack
-- API: ASP.NET Core (.NET 9), EF Core code-first, SQL Server (SQLite for local and tests)
+- API: ASP.NET Core (.NET 9), EF Core code-first with migrations, SQL Server (SQLite for local and tests)
 - Web: Angular 20 (standalone components, signals, Reactive Forms, lazy routes), `angular-auth-oidc-client`
 - Auth: OpenID Connect. Keycloak runs locally in Docker; the API validates JWTs and maps realm roles to role claims (`KeycloakRolesClaimsTransformation`)
-- Tests: xUnit unit and `WebApplicationFactory` integration tests (20), Jasmine/Karma (5)
+- Tests: xUnit unit and `WebApplicationFactory` integration tests (23), Jasmine/Karma (5)
 - Planned: SCIM-style `/Users` endpoint, AI policy assistant, GitHub Actions CI, Azure deploy
 
 ## Why Keycloak and Docker
@@ -47,6 +47,7 @@ Roles: `employee`, `manager`, `admin` (admin includes manager rights). The UI hi
    dotnet run
    ```
    (PowerShell: `$env:Database__Provider="Sqlite"` and so on.) To use SQL Server instead: `docker compose up -d sqlserver` and leave the provider at its default.
+   With SQL Server the API applies migrations on startup. If you ran an earlier version that used `EnsureCreated`, drop that database first (`docker compose down -v`), because its tables have no migration history.
 3. Angular:
    ```
    cd web
@@ -57,17 +58,25 @@ Roles: `employee`, `manager`, `admin` (admin includes manager rights). The UI hi
 
 ## Tests
 ```
-dotnet test                                   # 20 tests, no Docker needed
+dotnet test                                   # 23 tests, no Docker needed
 cd web && npx ng test --watch=false           # 5 tests
 bash scripts/smoke-test.sh                    # real tokens from Keycloak against the running API
 ```
 
 ## Milestones
 - [x] Solution scaffold, domain model, EF Core code-first context
-- [x] Role-based endpoints, audit log, validation, 20 tests
+- [x] Role-based endpoints, audit log, validation, 23 tests, optimistic concurrency on decisions
 - [x] Angular UI with OIDC login (authorization code + PKCE), role-aware screens
-- [ ] EF Core migrations
+- [x] EF Core migrations (SQL Server; SQLite is created from the model)
 - [ ] AI policy assistant (retrieval over policy documents)
 - [ ] SCIM-style `/Users` endpoint
 - [ ] CI with GitHub Actions, Azure deploy
 - [ ] Architecture diagram and demo video
+
+## Changing the model
+Migrations target SQL Server. After changing an entity:
+```
+dotnet tool restore
+dotnet ef migrations add <Name> --project src/AccessDesk.Api --output-dir Data/Migrations
+```
+A test fails if the model and the migrations disagree.

@@ -65,11 +65,19 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
-// Code-first schema. EF Core migrations come next; EnsureCreated keeps the first run simple.
+// SQL Server applies the EF Core migrations. SQLite (local development and tests) has no migration history of its own,
+// so it is created straight from the model.
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AccessDeskDbContext>();
-    db.Database.EnsureCreated();
+    if (db.Database.IsSqlite())
+    {
+        db.Database.EnsureCreated();
+    }
+    else
+    {
+        db.Database.Migrate();
+    }
 }
 
 app.UseCors();
