@@ -46,18 +46,19 @@ jobs:
     name: Migrations on SQL Server
     runs-on: ubuntu-latest
     env:
-      # Throwaway password for a container that only exists for this job.
+      # Throwaway password for a container that only exists for this job (repeated in the service block below,
+      # where the env context is not available).
       MSSQL_SA_PASSWORD: Ci-only-Passw0rd!
     services:
       sqlserver:
         image: mcr.microsoft.com/mssql/server:2022-latest
         env:
           ACCEPT_EULA: Y
-          MSSQL_SA_PASSWORD: ${{ env.MSSQL_SA_PASSWORD }}
+          MSSQL_SA_PASSWORD: Ci-only-Passw0rd!
         ports:
           - 1433:1433
         options: >-
-          --health-cmd "/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P '${{ env.MSSQL_SA_PASSWORD }}' -Q 'SELECT 1'"
+          --health-cmd "/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P 'Ci-only-Passw0rd!' -Q 'SELECT 1'"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 12
