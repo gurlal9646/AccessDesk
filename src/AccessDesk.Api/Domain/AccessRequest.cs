@@ -19,4 +19,7 @@ public class AccessRequest
     public string? DecidedBy { get; set; }
     public DateTime? DecidedAtUtc { get; set; }
     public string? DecisionComment { get; set; }
+
+    // Optimistic concurrency token: bumped on every decision so two managers cannot both decide the same request.
+    public int Version { get; set; }
 }

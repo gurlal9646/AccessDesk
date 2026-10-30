@@ -83,6 +83,7 @@ public class AccessRequestService(AccessDeskDbContext db, TimeProvider clock) : 
         request.DecidedBy = manager.Name;
         request.DecidedAtUtc = now;
         request.DecisionComment = string.IsNullOrWhiteSpace(comment) ? null : comment.Trim();
+        request.Version++;
         db.AuditEntries.Add(new AuditEntry
         {
             TimestampUtc = now,
@@ -90,7 +91,15 @@ public class AccessRequestService(AccessDeskDbContext db, TimeProvider clock) : 
             Action = approve ? "request.approved" : "request.rejected",
             Details = $"Request {request.Id} for {request.System} by {request.RequesterName}"
         });
-        await db.SaveChangesAsync(ct);
+        try
+        {
+            await db.SaveChangesAsync(ct);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            // Another manager decided this request between our read and our write; their decision stands.
+            return new DecisionResult(DecisionOutcome.AlreadyDecided);
+        }
         return new DecisionResult(DecisionOutcome.Ok, request);
     }
 }

@@ -4,6 +4,7 @@ using AccessDesk.Api.Security;
 using AccessDesk.Api.Services;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 
 namespace AccessDesk.Tests;
 
@@ -128,10 +129,45 @@ public class AccessRequestServiceTests : IDisposable
         Assert.Equal(AccessRequestStatus.Pending, (await _db.AccessRequests.SingleAsync()).Status);
     }
 
+    [Fact]
+    public async Task Decide_WhenAnotherManagerDecidesFirst_ReturnsAlreadyDecided_AndKeepsTheirDecision()
+    {
+        var created = await _service.CreateAsync(Alice, "GitHub", "Alice needs GitHub access");
+
+        // The interceptor runs a competing approval between this service's read and its write.
+        var racing = new DbContextOptionsBuilder<AccessDeskDbContext>()
+            .UseSqlite(_connection)
+            .AddInterceptors(new CompetingDecisionInterceptor(_connection, created.Id))
+            .Options;
+        await using var racingDb = new AccessDeskDbContext(racing);
+        var racingService = new AccessRequestService(racingDb, _clock);
+
+        var result = await racingService.DecideAsync(Manager, created.Id, approve: false, comment: null);
+
+        Assert.Equal(DecisionOutcome.AlreadyDecided, result.Outcome);
+        var stored = await _db.AccessRequests.AsNoTracking().SingleAsync();
+        Assert.Equal(AccessRequestStatus.Approved, stored.Status);
+        Assert.Equal(1, stored.Version);
+        Assert.DoesNotContain(await _db.AuditEntries.AsNoTracking().ToListAsync(), a => a.Action == "request.rejected");
+    }
+
     public void Dispose()
     {
         _db.Dispose();
         _connection.Dispose();
+    }
+
+    private sealed class CompetingDecisionInterceptor(SqliteConnection connection, int requestId) : SaveChangesInterceptor
+    {
+        public override ValueTask<InterceptionResult<int>> SavingChangesAsync(
+            DbContextEventData eventData, InterceptionResult<int> result, CancellationToken cancellationToken = default)
+        {
+            using var command = connection.CreateCommand();
+            command.CommandText = "UPDATE AccessRequests SET Status = 'Approved', Version = Version + 1 WHERE Id = $id";
+            command.Parameters.AddWithValue("$id", requestId);
+            command.ExecuteNonQuery();
+            return ValueTask.FromResult(result);
+        }
     }
 
     private sealed class FixedClock(DateTimeOffset start) : TimeProvider

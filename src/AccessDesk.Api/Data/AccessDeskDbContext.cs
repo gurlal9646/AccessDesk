@@ -20,6 +20,7 @@ public class AccessDeskDbContext(DbContextOptions<AccessDeskDbContext> options) 
             e.Property(x => x.Status).HasConversion<string>().HasMaxLength(20);
             e.Property(x => x.DecidedBy).HasMaxLength(200);
             e.Property(x => x.DecisionComment).HasMaxLength(2000);
+            e.Property(x => x.Version).IsConcurrencyToken();
             e.HasIndex(x => new { x.RequesterId, x.Status });
         });
 
