@@ -1,9 +1,11 @@
 # AccessDesk
 
+[![CI](https://github.com/gurlal9646/AccessDesk/actions/workflows/ci.yml/badge.svg)](https://github.com/gurlal9646/AccessDesk/actions/workflows/ci.yml)
+
 A small access-request and audit app built to show a modern .NET + Angular stack with an identity focus and an AI assistant. All data is fake demo data.
 
 ## Status
-Week 1: the API, the Angular UI with Keycloak login (authorization code + PKCE), role-based screens and automated tests are working end to end. The AI assistant and CI are next.
+Week 1: the API, the Angular UI with Keycloak login (authorization code + PKCE), role-based screens and automated tests are working end to end. CI runs on every push. The AI assistant is next.
 
 ## What it does
 - Employees raise requests for access to systems (GitHub, Jira, Azure and so on).
@@ -15,7 +17,7 @@ Week 1: the API, the Angular UI with Keycloak login (authorization code + PKCE),
 - Web: Angular 20 (standalone components, signals, Reactive Forms, lazy routes), `angular-auth-oidc-client`
 - Auth: OpenID Connect. Keycloak runs locally in Docker; the API validates JWTs and maps realm roles to role claims (`KeycloakRolesClaimsTransformation`)
 - Tests: xUnit unit and `WebApplicationFactory` integration tests (23), Jasmine/Karma (5)
-- Planned: SCIM-style `/Users` endpoint, AI policy assistant, GitHub Actions CI, Azure deploy
+- Planned: SCIM-style `/Users` endpoint, AI policy assistant, Azure deploy
 
 ## Why Keycloak and Docker
 - **Keycloak** is a real identity provider. Login, passwords, MFA and tokens are its job, so this app never stores a password. It also lets the demo use the same flow production apps use (OIDC with authorization code + PKCE), with roles that are checked server-side.
@@ -70,7 +72,8 @@ bash scripts/smoke-test.sh                    # real tokens from Keycloak agains
 - [x] EF Core migrations (SQL Server; SQLite is created from the model)
 - [ ] AI policy assistant (retrieval over policy documents)
 - [ ] SCIM-style `/Users` endpoint
-- [ ] CI with GitHub Actions, Azure deploy
+- [x] CI with GitHub Actions (API tests, Angular tests and build, migrations on SQL Server)
+- [ ] Azure deploy
 - [ ] Architecture diagram and demo video
 
 ## Changing the model
