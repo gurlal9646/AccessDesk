@@ -10,6 +10,11 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/requests-page').then((m) => m.RequestsPage),
   },
   {
+    path: 'assistant',
+    canActivate: [autoLoginPartialRoutesGuard],
+    loadComponent: () => import('./pages/assistant-page').then((m) => m.AssistantPage),
+  },
+  {
     path: 'audit',
     canActivate: [autoLoginPartialRoutesGuard, adminGuard],
     loadComponent: () => import('./pages/audit-page').then((m) => m.AuditPage),

@@ -2,6 +2,7 @@
   <a class="brand" routerLink="/">AccessDesk</a>
   <nav aria-label="Main">
     <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Requests</a>
+    <a routerLink="/assistant" routerLinkActive="active">Ask the policy</a>
     @if (session.isAdmin()) {
       <a routerLink="/audit" routerLinkActive="active">Audit log</a>
     }

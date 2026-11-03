@@ -24,3 +24,13 @@ export interface CreateAccessRequest {
   system: string;
   justification: string;
 }
+
+export interface PolicySource {
+  document: string;
+  section: string;
+}
+
+export interface AssistantAnswer {
+  answer: string;
+  sources: PolicySource[];
+}

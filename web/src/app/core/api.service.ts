@@ -2,7 +2,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { API_BASE_URL } from './app-config';
-import { AccessRequest, AuditEntry, CreateAccessRequest, RequestStatus } from './models';
+import { AccessRequest, AssistantAnswer, AuditEntry, CreateAccessRequest, RequestStatus } from './models';
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
@@ -30,5 +30,9 @@ export class ApiService {
 
   audit(take = 100): Observable<AuditEntry[]> {
     return this.http.get<AuditEntry[]>(`${API_BASE_URL}/api/audit`, { params: { take } });
+  }
+
+  askAssistant(question: string): Observable<AssistantAnswer> {
+    return this.http.post<AssistantAnswer>(`${API_BASE_URL}/api/assistant/ask`, { question });
   }
 }
