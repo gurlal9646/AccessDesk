@@ -5,7 +5,9 @@
 A small access-request and audit app built to show a modern .NET + Angular stack with an identity focus and an AI assistant. All data is fake demo data.
 
 ## Status
-Week 1: the API, the Angular UI with Keycloak login (authorization code + PKCE), role-based screens and automated tests are working end to end. CI runs on every push. The AI assistant is next.
+Week 1: the API, the Angular UI with Keycloak login (authorization code + PKCE), role-based screens and automated tests are working end to end. CI runs on every push.
+
+Week 2 (in progress): the AI policy assistant works end to end in code: the API and the Angular "Ask the policy" screen, both tested. A check with a real Claude API key is next.
 
 ## What it does
 - Employees raise requests for access to systems (GitHub, Jira, Azure and so on).
@@ -16,8 +18,9 @@ Week 1: the API, the Angular UI with Keycloak login (authorization code + PKCE),
 - API: ASP.NET Core (.NET 9), EF Core code-first with migrations, SQL Server (SQLite for local and tests)
 - Web: Angular 20 (standalone components, signals, Reactive Forms, lazy routes), `angular-auth-oidc-client`
 - Auth: OpenID Connect. Keycloak runs locally in Docker; the API validates JWTs and maps realm roles to role claims (`KeycloakRolesClaimsTransformation`)
-- Tests: xUnit unit and `WebApplicationFactory` integration tests (23), Jasmine/Karma (5)
-- Planned: SCIM-style `/Users` endpoint, AI policy assistant, Azure deploy
+- AI: policy assistant that retrieves sections of the policy documents and asks the Claude API to answer from them, with citations
+- Tests: xUnit unit and `WebApplicationFactory` integration tests (41), Jasmine/Karma (10)
+- Planned: SCIM-style `/Users` endpoint, Azure deploy
 
 ## Why Keycloak and Docker
 - **Keycloak** is a real identity provider. Login, passwords, MFA and tokens are its job, so this app never stores a password. It also lets the demo use the same flow production apps use (OIDC with authorization code + PKCE), with roles that are checked server-side.
@@ -31,8 +34,22 @@ Week 1: the API, the Angular UI with Keycloak login (authorization code + PKCE),
 | POST | `/api/requests/{id}/approve` | manager, admin | 404 unknown, 409 already decided, 403 own request |
 | POST | `/api/requests/{id}/reject` | manager, admin | same rules |
 | GET | `/api/audit` | admin | newest first, `?take=` up to 500 |
+| POST | `/api/assistant/ask` | any signed-in user | question 5-500 chars; returns `answer` and `sources`; 503 if the model is not configured or unreachable |
 
 Roles: `employee`, `manager`, `admin` (admin includes manager rights). The UI hides what a role cannot do, but the API is what enforces it.
+
+## AI policy assistant
+The policy documents are markdown files in `src/AccessDesk.Api/Policies`. They are fictional demo content.
+1. **Retrieve:** each `##` section is a chunk. A question is scored against the chunks with TF-IDF keyword scoring (heading matches count triple) and the top 3 are kept. It is not embeddings: the document set is small, and keyword scoring is deterministic and easy to test.
+2. **Ask:** the chunks and the question go to the Claude Messages API in one request. The system prompt tells the model to answer only from the numbered excerpts, cite them, say so when the policy does not cover the question, and treat the question as a question rather than an instruction.
+3. **Skip the model when there is nothing to say:** if no section matches, the API answers "not covered" without calling the model, which saves cost and avoids a made-up answer.
+
+The API key is read from `Assistant:ApiKey`. Set it as an environment variable, never in a file that is committed:
+```
+set Assistant__ApiKey=your-key        # PowerShell: $env:Assistant__ApiKey="your-key"
+```
+Tests and CI use a fake client, so they need no key and make no network calls.
+
 
 ## Run it locally
 1. Start Docker Desktop, then:

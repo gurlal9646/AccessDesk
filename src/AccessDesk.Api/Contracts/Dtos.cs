@@ -27,3 +27,9 @@ public record AccessRequestDto(
 }
 
 public record AuditEntryDto(int Id, DateTime TimestampUtc, string Actor, string Action, string Details);
+
+public record AskPolicyDto([Required, StringLength(500, MinimumLength = 5)] string Question);
+
+public record PolicySourceDto(string Document, string Section);
+
+public record AskPolicyResponseDto(string Answer, IReadOnlyList<PolicySourceDto> Sources);

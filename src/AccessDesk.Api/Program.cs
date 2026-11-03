@@ -2,6 +2,7 @@ using System.Text.Json.Serialization;
 using AccessDesk.Api.Data;
 using AccessDesk.Api.Security;
 using AccessDesk.Api.Services;
+using AccessDesk.Api.Services.Assistant;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -26,6 +27,17 @@ builder.Services.AddDbContext<AccessDeskDbContext>(options =>
 
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddScoped<IAccessRequestService, AccessRequestService>();
+
+// AI policy assistant: keyword retrieval over the policy documents, then one call to the Claude API (Assistant:ApiKey).
+builder.Services.Configure<AssistantOptions>(builder.Configuration.GetSection("Assistant"));
+builder.Services.AddSingleton<IPolicyStore, PolicyStore>();
+builder.Services.AddSingleton<PolicyRetriever>();
+builder.Services.AddHttpClient<IClaudeClient, AnthropicClient>(http =>
+{
+    http.BaseAddress = new Uri("https://api.anthropic.com/");
+    http.Timeout = TimeSpan.FromSeconds(30);
+});
+builder.Services.AddScoped<IPolicyAssistant, PolicyAssistant>();
 
 // Authentication: JWT bearer against an OIDC provider (Keycloak in docker-compose, or Entra ID).
 builder.Services
